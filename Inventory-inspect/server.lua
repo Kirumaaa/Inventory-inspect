@@ -1,55 +1,68 @@
+ESX = nil
 
+TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
--- Command: /inspectinventory [targetID]
-lib.addCommand('inspectinventory', {
-    help = 'Öffne das Inventar eines Spielers',
-    params = {
-        { name = 'playerId', help = 'Die ID des Zielspielers', type = 'number', required = true }
-    },
-    restricted = 'admin',
-    handler = function(source, args)
-        local playerId = args.playerId
-        local targetPlayer = Ox.GetPlayer(playerId)
-
-        if not targetPlayer then
-            lib.notify(source, { type = 'error', description = 'Spieler nicht gefunden!' })
-            return
-        end
-
-        -- Admin öffnet das Ziel-Inventar
-        TriggerClientEvent('ox_inventory:openInventory', source, 'player', targetPlayer.source)
-        lib.notify(source, { type = 'success', description = 'Inventar des Spielers geöffnet!' })
+-- Prüft, ob ein Spieler Admin ist
+local function isAdmin(source)
+    local xPlayer = ESX.GetPlayerFromId(source)
+    if xPlayer and xPlayer.getGroup() == 'admin' then
+        return true
     end
-})
+    return false
+end
 
--- Command: /inspectvehicleinventory [plate]
-lib.addCommand('inspectvehicleinventory', {
-    help = 'Öffne das Inventar eines Fahrzeugs',
-    params = {
-        { name = 'plate', help = 'Kennzeichen des Fahrzeugs', type = 'string', required = true }
-    },
-    restricted = 'admin', 
-    handler = function(source, args)
-        local plate = args.plate
-
-        -- Admin öffnet das Fahrzeug-Inventar
-        TriggerClientEvent('ox_inventory:openInventory', source, 'vehicle', plate)
-        lib.notify(source, { type = 'success', description = 'Inventar des Fahrzeugs geöffnet!' })
+-- Spielerinventar inspizieren
+RegisterCommand('inspectinventory', function(source, args, rawCommand)
+    if not isAdmin(source) then
+        TriggerClientEvent('ox_lib:notify', source, { type = 'error', description = 'Du hast keine Berechtigung, diesen Befehl zu nutzen!' })
+        return
     end
-})
 
--- Command: /inspectstorageinventory [storage]
-lib.addCommand('inspectstorageinventory', {
-    help = 'Öffne das Inventar eines Lagers',
-    params = {
-        { name = 'storage', help = 'Name des Lagers', type = 'string', required = true }
-    },
-    restricted = 'admin', 
-    handler = function(source, args)
-        local storage = args.storage
-
-        -- Admin öffnet das Lager-Inventar
-        TriggerClientEvent('ox_inventory:openInventory', source, 'stash', storage)
-        lib.notify(source, { type = 'success', description = 'Lagerinventar geöffnet!' })
+    local targetId = tonumber(args[1])
+    if not targetId or not GetPlayerName(targetId) then
+        TriggerClientEvent('ox_lib:notify', source, { type = 'error', description = 'Ungültige Spieler-ID!' })
+        return
     end
-})
+
+    local xTarget = ESX.GetPlayerFromId(targetId)
+    if xTarget then
+        TriggerClientEvent('ox_inventory:openInventory', source, 'player', targetId)
+        TriggerClientEvent('ox_lib:notify', source, { type = 'success', description = 'Inventar des Spielers geöffnet!' })
+    else
+        TriggerClientEvent('ox_lib:notify', source, { type = 'error', description = 'Spieler nicht gefunden!' })
+    end
+end, false)
+
+-- Fahrzeuginventar inspizieren
+RegisterCommand('inspectvehicleinventory', function(source, args, rawCommand)
+    if not isAdmin(source) then
+        TriggerClientEvent('ox_lib:notify', source, { type = 'error', description = 'Du hast keine Berechtigung, diesen Befehl zu nutzen!' })
+        return
+    end
+
+    local plate = args[1]
+    if not plate then
+        TriggerClientEvent('ox_lib:notify', source, { type = 'error', description = 'Ungültiges Kennzeichen!' })
+        return
+    end
+
+    TriggerClientEvent('ox_inventory:openInventory', source, 'vehicle', plate)
+    TriggerClientEvent('ox_lib:notify', source, { type = 'success', description = 'Fahrzeuginventar geöffnet!' })
+end, false)
+
+-- Lagerinventar inspizieren
+RegisterCommand('inspectstorageinventory', function(source, args, rawCommand)
+    if not isAdmin(source) then
+        TriggerClientEvent('ox_lib:notify', source, { type = 'error', description = 'Du hast keine Berechtigung, diesen Befehl zu nutzen!' })
+        return
+    end
+
+    local storageName = args[1]
+    if not storageName then
+        TriggerClientEvent('ox_lib:notify', source, { type = 'error', description = 'Ungültiger Lagername!' })
+        return
+    end
+
+    TriggerClientEvent('ox_inventory:openInventory', source, 'stash', storageName)
+    TriggerClientEvent('ox_lib:notify', source, { type = 'success', description = 'Lagerinventar geöffnet!' })
+end, false)
