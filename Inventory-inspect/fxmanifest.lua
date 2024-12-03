@@ -1,16 +1,16 @@
 fx_version 'cerulean'
 game 'gta5'
 
-author 'Kiruma'
-description 'Inventory Inspekt for Oxinventory'
+author 'DeinName'
+description 'Admin-Inventory-Inspektionsskript für ESX und OxInventory'
 version '1.0.0'
 
+-- Server-Skript
+server_script 'admin_inventory_esx_ox.lua'
 
-server_script 'server.lua'
-
-
+-- Abhängigkeiten
 dependencies {
-    'ox_core',        
-    'ox_inventory',   
-    'ox_lib'          
+    'es_extended',   
+    'ox_inventory',  
+    'ox_lib'         
 }
